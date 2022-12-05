@@ -6,8 +6,8 @@ spring:
       ddl-auto: validate
       database-platform: org.hibernate.dialect.MySQL8Dialect
   datasource:
-    url: jdbc:mysql://db4free.net:3306/tax_calc2
-    username: user_23
+    url: jdbc:mysql://db4free.net:3306/tax_calc33
+    username: user_03
     password: Tax@2013
 
 springdoc:
