@@ -41,9 +41,8 @@ http://localhost:8090/api/v1/tax-calculate
 
 ````````
 {
-    "taxAmount": 136.00,
+    "taxAmount": 128.00,
     "chargesHistoryByDate": {
-        "2013-03-28": 8.00,
         "2013-01-14": 60,
         "2013-03-26": 8.00,
         "2013-02-08": 60
@@ -54,13 +53,15 @@ http://localhost:8090/api/v1/tax-calculate
 
 
 ## Connect to MySQL Database
-mysql -u user_03 -p -h db4free.net
+
+mysql -u user_99 -p -h db4free.net
 password: Tax@2013
 
-mysql> use tax_calc33;
+``````````
+mysql> use tax_calc99;
 mysql> show tables;
 +-------------------------+
-| Tables_in_tax_calc33    |
+| Tables_in_tax_calc99    |
 +-------------------------+
 | city                    |
 | city_vehicle_join_table |
@@ -72,6 +73,7 @@ mysql> show tables;
 | vehicle                 |
 | working_calendar        |
 +-------------------------+
+```````````
 
 
 

@@ -37,19 +37,20 @@ public class CongestionTaxCalculatorService {
         Map<String, BigDecimal> chargerHistoryPerDay = new HashMap<>();
         CityEntity cityEntity = cityRepository.findByName(city).get();
 
-        // check for tax exempt vehicle
-        if(isTollFreeVehicle(cityEntity.getTaxExemptVehicles(), vehicle)) return TaxCalculatorResponse.builder().taxAmount(new BigDecimal(0)).build();
         if(dates == null || dates.isEmpty()) return TaxCalculatorResponse.builder().taxAmount(new BigDecimal(0)).build();
+
+        // check for tax-free vehicle
+        if(isTollFreeVehicle(cityEntity.getTaxExemptVehicles(), vehicle)) return TaxCalculatorResponse.builder().taxAmount(new BigDecimal(0)).build();
 
         DateTimeUtil.sortDateByAsc(dates);
 
-        // remove weekends, public holidays, days before or after a public holiday as per configuration and holiday month days
+        // remove tax free days and holiday month
         dates.removeIf(date -> IsTollFreeDate(date, cityEntity));
 
         // apply single charge rule
         Map<String, List<BigDecimal>> chargesPerDay = getSingleChargeRule(dates, cityEntity);
 
-        // calculate for total charge
+        // calculate total tax
         BigDecimal totalFee = calculateTotalTaxBySingleChargeRule(chargerHistoryPerDay, cityEntity, chargesPerDay);
 
         return TaxCalculatorResponse.builder().taxAmount(totalFee).chargesHistoryByDate(chargerHistoryPerDay).build();
@@ -74,7 +75,9 @@ public class CongestionTaxCalculatorService {
         List<Date> visitedSlots = new ArrayList<>();
         Map<String, List<BigDecimal>> result = new HashMap<>();
         for(int start = 0; start< dates.size(); start++) {
+            //skip duplicate date entries
             if(visitedSlots.contains(dates.get(start))) continue;
+            // calculate first date entry which has nor previous entry so single charge rule doesn't apply
             BigDecimal charge = getTollFeeByTariffAndDate(dates.get(start), cityEntity.getTariffEntities());
             for (int end = start + 1; end < dates.size(); end++) {
                 long duration  = dates.get(end).getTime() - dates.get(start).getTime();
