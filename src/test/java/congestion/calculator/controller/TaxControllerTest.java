@@ -31,7 +31,7 @@ public class TaxControllerTest {
     private CongestionTaxCalculatorService congestionTaxCalculatorService;
 
     @Test
-    public void when_calculate_tax_called_with_valid_input_then_return_success_response() throws Exception {
+    public void shouldReturnSuccessForValidInput() throws Exception {
 
         TaxCalculatorRequest request = constructRequest("Car");
         TaxCalculatorResponse taxCalculatorResponse = TaxCalculatorResponse.builder().taxAmount(new BigDecimal(10)).build();
@@ -43,11 +43,19 @@ public class TaxControllerTest {
     }
 
     @Test(expected = CustomException.class)
-    public void when_calculate_tax_called_with_invalid_vehicle_type_then_return_error_response() throws Exception {
+    public void shouldThrowErrorForInvalidVehicle() throws Exception {
 
         TaxCalculatorRequest request = constructRequest("Space Ship");
         Mockito.doThrow(new CustomException("Invalid Vehicle")).when(congestionTaxCalculatorService).isValidVehicle(request.getVehicle());
         taxController.calculateCongestionTax(request, "Gothenburg");
+    }
+
+    @Test(expected = CustomException.class)
+    public void shouldThrowErrorForInvalidCity() throws Exception {
+
+        TaxCalculatorRequest request = constructRequest("Car");
+        Mockito.doThrow(new CustomException("Invalid City")).when(congestionTaxCalculatorService).isValidCity("Lund");
+        taxController.calculateCongestionTax(request, "Lund");
     }
 
     private TaxCalculatorRequest constructRequest(String vehicleType) {

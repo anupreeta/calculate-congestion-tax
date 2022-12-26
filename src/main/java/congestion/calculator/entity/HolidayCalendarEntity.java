@@ -11,7 +11,7 @@ import java.util.Date;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "holiday_calendar")
+@Table(name = "city_holidays")
 public class HolidayCalendarEntity {
 
     @Id

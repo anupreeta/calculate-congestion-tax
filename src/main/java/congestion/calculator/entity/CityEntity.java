@@ -36,7 +36,7 @@ public class CityEntity {
     private Set<TariffEntity> tariffEntities;
 
     @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "city_vehicle_join_table",
+    @JoinTable(name = "city_vehicle",
             joinColumns = @JoinColumn(name = "city_id"),
             inverseJoinColumns = @JoinColumn(name = "vehicle_id"))
     private Set<VehicleEntity> taxExemptVehicles;

@@ -28,23 +28,4 @@ public class TaxController {
         TaxCalculatorResponse result = congestionTaxCalculatorService.getTax(taxCalculatorRequest.getVehicle(), taxCalculatorRequest.getCheckInTime(), city);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
-
-/*    @ExceptionHandler(GlobalException.class)
-    public final ResponseEntity<Object> handleGlobalException(GlobalException e) {
-        HttpStatus httpStatus = e.getHttpStatus();
-        if (null == e.getHttpStatus()) {
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        List<String> details = new ArrayList<>();
-        details.add(e.getMessage());
-        return new ResponseEntity<>(details, httpStatus);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public final ResponseEntity<Object> handleException(Exception e) {
-        HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        List<String> details = new ArrayList<>();
-        details.add(e.getMessage());
-        return new ResponseEntity<>(details, httpStatus);
-    }*/
 }

@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "preference")
+@Table(name = "city_tax_rules")
 public class CityPreferenceEntity {
 
     @Id

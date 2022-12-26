@@ -10,7 +10,7 @@ import javax.persistence.*;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "working_calendar")
+@Table(name = "city_tax_days")
 public class WorkingCalendarEntity {
 
     @Id

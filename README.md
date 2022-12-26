@@ -76,4 +76,4 @@ mysql> show tables;
 ```````````
 
 
-
+psql -h localhost -p 5432 -d calculator -U myuser

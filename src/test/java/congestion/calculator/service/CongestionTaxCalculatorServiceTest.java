@@ -35,8 +35,8 @@ public class CongestionTaxCalculatorServiceTest {
     CongestionTaxCalculatorService congestionTaxCalculatorService;
 
     @Test
-    public void when_get_tax_called_with_empty_input_then_return_zero_result() throws ParseException {
-        TaxCalculatorRequest request = constructRequest("Car");
+    public void shouldReturnZeroWhenEmptyInput() throws ParseException {
+        TaxCalculatorRequest request = createRequest("Car");
         Mockito.when(cityRepository.findByName("Gothenburg")).thenReturn(getEmptyVehicleResponse());
         TaxCalculatorResponse result = congestionTaxCalculatorService.getTax(request.getVehicle(), request.getCheckInTime(), "Gothenburg");
         assertThat(result).isNotNull();
@@ -44,20 +44,20 @@ public class CongestionTaxCalculatorServiceTest {
     }
 
     @Test
-    public void when_get_tax_called_with_valid_input_then_return_result() throws ParseException {
-        TaxCalculatorRequest request = constructRequest("Car");
+    public void shouldReturnSuccessForValidInput() throws ParseException {
+        TaxCalculatorRequest request = createRequest("Car");
         Mockito.when(cityRepository.findByName("Gothenburg")).thenReturn(getVehicleResponse());
         TaxCalculatorResponse result = congestionTaxCalculatorService.getTax(request.getVehicle(), request.getCheckInTime(), "Gothenburg");
         assertThat(result).isNotNull();
         assertThat(result.getTaxAmount()).isEqualTo(new BigDecimal(8));
     }
 
-    private TaxCalculatorRequest constructRequest(String vehicleType) throws ParseException {
+    private TaxCalculatorRequest createRequest(String vehicleType) throws ParseException {
         Vehicle vehicle = new Vehicle();
         vehicle.setType(vehicleType);
         List<Date> dateList = new ArrayList<>();
         DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date dateTime = formatter.parse("2013-01-14 06:01:00");
+        Date dateTime = formatter.parse("2013-01-02 06:15:00");
         dateList.add(dateTime);
         TaxCalculatorRequest request = new TaxCalculatorRequest();
         request.setCheckInTime(dateList);
@@ -73,15 +73,7 @@ public class CongestionTaxCalculatorServiceTest {
     private Optional<CityEntity> getVehicleResponse() {
         CityEntity cityEntity = CityEntity.builder().name("Gothenburg").id(1L).build();
 
-        WorkingCalendarEntity workingCalendarEntity = WorkingCalendarEntity.builder()
-                .isSunday(false).isSaturday(false)
-                .isMonday(true).isTuesday(true).isWednesday(true).isThursday(true).isFriday(true).build();
-        cityEntity.setWorkingCalendarEntity(workingCalendarEntity);
-
-        HolidayMonthsEntity holidayMonthsEntity = HolidayMonthsEntity.builder()
-                .isJanuary(false).isFebruary(false).isMarch(false).isApril(false).isMay(false).isJune(false)
-                .isJuly(true).isAugust(false).isSeptember(false).isOctober(false).isNovember(false).isDecember(false).build();
-        cityEntity.setHolidayMonthsEntity(holidayMonthsEntity);
+        createCalendarEntities(cityEntity);
 
         Set<TariffEntity> tariffEntities = new HashSet<>();
         TariffEntity tariffEntity1 = TariffEntity.builder()
@@ -103,5 +95,17 @@ public class CongestionTaxCalculatorServiceTest {
         cityEntity.setCityPreferenceEntity(cityPreferenceEntity);
 
         return Optional.of(cityEntity);
+    }
+
+    private void createCalendarEntities(CityEntity cityEntity) {
+        WorkingCalendarEntity workingCalendarEntity = WorkingCalendarEntity.builder()
+                .isSunday(false).isSaturday(false)
+                .isMonday(true).isTuesday(true).isWednesday(true).isThursday(true).isFriday(true).build();
+        cityEntity.setWorkingCalendarEntity(workingCalendarEntity);
+
+        HolidayMonthsEntity holidayMonthsEntity = HolidayMonthsEntity.builder()
+                .isJanuary(false).isFebruary(false).isMarch(false).isApril(false).isMay(false).isJune(false)
+                .isJuly(true).isAugust(false).isSeptember(false).isOctober(false).isNovember(false).isDecember(false).build();
+        cityEntity.setHolidayMonthsEntity(holidayMonthsEntity);
     }
 }

@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "tariff")
+@Table(name = "city_tax_charges")
 public class TariffEntity {
 
     @Id
