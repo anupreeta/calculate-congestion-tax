@@ -11,7 +11,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "city_holiday_months")
-public class HolidayMonthsEntity {
+public class CityHolidayMonths {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +20,7 @@ public class HolidayMonthsEntity {
     @Column(name = "is_january", nullable = false, columnDefinition = "BIT", length = 1)
     private boolean isJanuary;
 
-    @Column(name = "is_February", nullable = false, columnDefinition = "BIT", length = 1)
+    @Column(name = "is_february", nullable = false, columnDefinition = "BIT", length = 1)
     private boolean isFebruary;
 
     @Column(name = "is_march", nullable = false, columnDefinition = "BIT", length = 1)
@@ -50,7 +50,7 @@ public class HolidayMonthsEntity {
     @Column(name = "is_november", nullable = false, columnDefinition = "BIT", length = 1)
     private boolean isNovember;
 
-    @Column(name = "is_December", nullable = false, columnDefinition = "BIT", length = 1)
+    @Column(name = "is_december", nullable = false, columnDefinition = "BIT", length = 1)
     private boolean isDecember;
 
 

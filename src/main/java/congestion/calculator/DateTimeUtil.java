@@ -1,9 +1,9 @@
 package congestion.calculator;
 
 import congestion.calculator.entity.CityEntity;
-import congestion.calculator.entity.HolidayCalendarEntity;
-import congestion.calculator.entity.HolidayMonthsEntity;
-import congestion.calculator.entity.WorkingCalendarEntity;
+import congestion.calculator.entity.CityHolidays;
+import congestion.calculator.entity.CityHolidayMonths;
+import congestion.calculator.entity.CityTaxDays;
 import org.apache.commons.lang3.time.DateUtils;
 
 import java.text.ParseException;
@@ -16,64 +16,69 @@ public class DateTimeUtil {
     public static final SimpleDateFormat dateAndTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
-    public static Boolean isWeekend(WorkingCalendarEntity workingCalendarEntity, int day) {
-        if(workingCalendarEntity == null) return false;
+    public static Boolean isWeekend(CityTaxDays cityTaxDays, int day) {
+        if(cityTaxDays == null) return false;
 
-        if(workingCalendarEntity.isMonday() == false && day == Calendar.MONDAY) return true;
-        if(workingCalendarEntity.isTuesday() == false && day == Calendar.TUESDAY) return true;
-        if(workingCalendarEntity.isWednesday() == false && day == Calendar.WEDNESDAY) return true;
-        if(workingCalendarEntity.isThursday() == false && day == Calendar.THURSDAY) return true;
-        if(workingCalendarEntity.isFriday() == false && day == Calendar.FRIDAY) return true;
-        if(workingCalendarEntity.isSaturday() == false && day == Calendar.SATURDAY) return true;
-        if(workingCalendarEntity.isSunday() == false && day == Calendar.SUNDAY) return true;
-
-        return false;
-    }
-
-    public static Boolean isHolidayMonth(HolidayMonthsEntity holidayMonthsEntity, int month) {
-        if(holidayMonthsEntity == null) return false;
-
-        if(holidayMonthsEntity.isJanuary() == true && month == (Calendar.JANUARY+1)) return true;
-        if(holidayMonthsEntity.isFebruary() == true && month == (Calendar.FEBRUARY+1)) return true;
-        if(holidayMonthsEntity.isMarch() == true && month == (Calendar.MARCH+1)) return true;
-        if(holidayMonthsEntity.isApril() == true && month == (Calendar.APRIL+1)) return true;
-        if(holidayMonthsEntity.isMay() == true && month == (Calendar.MAY+1)) return true;
-        if(holidayMonthsEntity.isJune() == true && month == (Calendar.JUNE+1)) return true;
-        if(holidayMonthsEntity.isJuly() == true && month == (Calendar.JULY+1)) return true;
-        if(holidayMonthsEntity.isAugust() == true && month == (Calendar.AUGUST+1)) return true;
-        if(holidayMonthsEntity.isSeptember() == true && month == (Calendar.SEPTEMBER+1)) return true;
-        if(holidayMonthsEntity.isOctober() == true && month == (Calendar.OCTOBER+1)) return true;
-        if(holidayMonthsEntity.isNovember() == true && month == (Calendar.NOVEMBER+1)) return true;
-        if(holidayMonthsEntity.isDecember() == true && month == (Calendar.DECEMBER+1)) return true;
+        if(cityTaxDays.isMonday() == false && day == Calendar.MONDAY) return true;
+        if(cityTaxDays.isTuesday() == false && day == Calendar.TUESDAY) return true;
+        if(cityTaxDays.isWednesday() == false && day == Calendar.WEDNESDAY) return true;
+        if(cityTaxDays.isThursday() == false && day == Calendar.THURSDAY) return true;
+        if(cityTaxDays.isFriday() == false && day == Calendar.FRIDAY) return true;
+        if(cityTaxDays.isSaturday() == false && day == Calendar.SATURDAY) return true;
+        if(cityTaxDays.isSunday() == false && day == Calendar.SUNDAY) return true;
 
         return false;
     }
 
-    public static Boolean isPerOrPostOrInPublicHoliday(Date date, CityEntity cityEntity) {
-        Set<HolidayCalendarEntity> publicHolidays = cityEntity.getHolidayCalendarEntities();
-        if(publicHolidays == null || publicHolidays.isEmpty()) return false;
+    public static Boolean isHolidayMonth(CityHolidayMonths cityHolidayMonths, int month) {
+        if(cityHolidayMonths == null) return false;
 
-        if (publicHolidays.stream().filter(holiday -> DateUtils.isSameDay(holiday.getDate(), date)).count() > 0 ) return true;
+        if(cityHolidayMonths.isJanuary() == true && month == (Calendar.JANUARY+1)) return true;
+        if(cityHolidayMonths.isFebruary() == true && month == (Calendar.FEBRUARY+1)) return true;
+        if(cityHolidayMonths.isMarch() == true && month == (Calendar.MARCH+1)) return true;
+        if(cityHolidayMonths.isApril() == true && month == (Calendar.APRIL+1)) return true;
+        if(cityHolidayMonths.isMay() == true && month == (Calendar.MAY+1)) return true;
+        if(cityHolidayMonths.isJune() == true && month == (Calendar.JUNE+1)) return true;
+        if(cityHolidayMonths.isJuly() == true && month == (Calendar.JULY+1)) return true;
+        if(cityHolidayMonths.isAugust() == true && month == (Calendar.AUGUST+1)) return true;
+        if(cityHolidayMonths.isSeptember() == true && month == (Calendar.SEPTEMBER+1)) return true;
+        if(cityHolidayMonths.isOctober() == true && month == (Calendar.OCTOBER+1)) return true;
+        if(cityHolidayMonths.isNovember() == true && month == (Calendar.NOVEMBER+1)) return true;
+        if(cityHolidayMonths.isDecember() == true && month == (Calendar.DECEMBER+1)) return true;
+
+        return false;
+    }
+
+    public static Boolean isTaxFreeDay(Date date, CityEntity cityEntity) {
+        Set<CityHolidays> publicHolidays = cityEntity.getCityHolidays();
+        if(publicHolidays == null || publicHolidays.isEmpty())
+            return false;
+
+        if (publicHolidays.stream().filter(holiday -> DateUtils.isSameDay(holiday.getDate(), date)).count() > 0 )
+            return true;
 
         if (publicHolidays.stream()
-                .filter(holiday -> isDateInBetweenIncludingEndPoints(
-                        holiday.getDate(),
-                        DateUtils.addDays(holiday.getDate(), cityEntity.getCityPreferenceEntity().getNumberOfTaxFreeDaysAfterHoliday()),
-                        date
-                ))
-                .count() > 0 ) return true;
-
-        if (publicHolidays.stream()
-                .filter(holiday -> isDateInBetweenIncludingEndPoints(
-                        DateUtils.addDays(holiday.getDate(), -(cityEntity.getCityPreferenceEntity().getNumberOfTaxFreeDaysBeforeHoliday())),
+                .filter(holiday -> isDateInRange(
+                        DateUtils.addDays(holiday.getDate(), -(cityEntity.getCityTaxRules().getNumberOfTaxFreeDaysBeforeHoliday())),
                         holiday.getDate(),
                         date
                 ))
-                .count() > 0 ) return true;
+                .count() > 0 )
+            return true;
+
+        if (publicHolidays.stream()
+                .filter(holiday -> isDateInRange(
+                        holiday.getDate(),
+                        DateUtils.addDays(holiday.getDate(), cityEntity.getCityTaxRules().getNumberOfTaxFreeDaysAfterHoliday()),
+                        date
+                ))
+                .count() > 0 )
+            return true;
+
         return false;
     }
 
-    public static boolean isDateInBetweenIncludingEndPoints(final Date min, final Date max, final Date date){
+    public static boolean isDateInRange(final Date min, final Date max, final Date date){
         return !(date.before(min) || date.after(max));
     }
 

@@ -34,19 +34,19 @@ public class TaxControllerTest {
     public void shouldReturnSuccessForValidInput() throws Exception {
 
         TaxCalculatorRequest request = constructRequest("Car");
-        TaxCalculatorResponse taxCalculatorResponse = TaxCalculatorResponse.builder().taxAmount(new BigDecimal(10)).build();
-        Mockito.when(congestionTaxCalculatorService.getTax(request.getVehicle(), request.getCheckInTime(), "Gothenburg")).thenReturn(taxCalculatorResponse);
+        TaxCalculatorResponse taxCalculatorResponse = TaxCalculatorResponse.builder().totalTax(new BigDecimal(10)).build();
+        Mockito.when(congestionTaxCalculatorService.calculateTax(request.getVehicle(), request.getCheckInTime(), "Gothenburg")).thenReturn(taxCalculatorResponse);
         ResponseEntity<TaxCalculatorResponse> response = taxController.calculateCongestionTax(request, "Gothenburg");
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getTaxAmount()).isEqualTo(new BigDecimal(10));
+        assertThat(response.getBody().getTotalTax()).isEqualTo(new BigDecimal(10));
     }
 
     @Test(expected = CustomException.class)
     public void shouldThrowErrorForInvalidVehicle() throws Exception {
 
         TaxCalculatorRequest request = constructRequest("Space Ship");
-        Mockito.doThrow(new CustomException("Invalid Vehicle")).when(congestionTaxCalculatorService).isValidVehicle(request.getVehicle());
+        Mockito.doThrow(new CustomException("Invalid Vehicle")).when(congestionTaxCalculatorService).validateVehicle(request.getVehicle());
         taxController.calculateCongestionTax(request, "Gothenburg");
     }
 
@@ -54,7 +54,7 @@ public class TaxControllerTest {
     public void shouldThrowErrorForInvalidCity() throws Exception {
 
         TaxCalculatorRequest request = constructRequest("Car");
-        Mockito.doThrow(new CustomException("Invalid City")).when(congestionTaxCalculatorService).isValidCity("Lund");
+        Mockito.doThrow(new CustomException("Invalid City")).when(congestionTaxCalculatorService).validateCity("Lund");
         taxController.calculateCongestionTax(request, "Lund");
     }
 

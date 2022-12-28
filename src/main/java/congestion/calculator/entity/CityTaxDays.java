@@ -11,7 +11,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "city_tax_days")
-public class WorkingCalendarEntity {
+public class CityTaxDays {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

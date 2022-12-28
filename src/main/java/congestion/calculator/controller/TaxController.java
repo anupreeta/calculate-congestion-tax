@@ -23,9 +23,9 @@ public class TaxController {
     @PostMapping
     public ResponseEntity<TaxCalculatorResponse> calculateCongestionTax(@RequestBody TaxCalculatorRequest taxCalculatorRequest,
                                               @RequestHeader("city") String city) throws CustomException {
-        congestionTaxCalculatorService.isValidCity(city);
-        congestionTaxCalculatorService.isValidVehicle(taxCalculatorRequest.getVehicle());
-        TaxCalculatorResponse result = congestionTaxCalculatorService.getTax(taxCalculatorRequest.getVehicle(), taxCalculatorRequest.getCheckInTime(), city);
+        congestionTaxCalculatorService.validateCity(city);
+        congestionTaxCalculatorService.validateVehicle(taxCalculatorRequest.getVehicle());
+        TaxCalculatorResponse result = congestionTaxCalculatorService.calculateTax(taxCalculatorRequest.getVehicle(), taxCalculatorRequest.getCheckInTime(), city);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

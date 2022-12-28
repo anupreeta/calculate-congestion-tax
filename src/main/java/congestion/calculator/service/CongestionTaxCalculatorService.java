@@ -2,13 +2,12 @@ package congestion.calculator.service;
 
 import congestion.calculator.DateTimeUtil;
 import congestion.calculator.entity.CityEntity;
-import congestion.calculator.entity.TariffEntity;
-import congestion.calculator.entity.VehicleEntity;
+import congestion.calculator.entity.CityTaxCharges;
+import congestion.calculator.entity.Vehicle;
 import congestion.calculator.exception.CustomException;
 import congestion.calculator.model.TaxCalculatorResponse;
-import congestion.calculator.model.Vehicle;
-import congestion.calculator.repo.CityRepository;
-import congestion.calculator.repo.VehicleRepository;
+import congestion.calculator.repository.CityRepository;
+import congestion.calculator.repository.VehicleRepository;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,65 +31,69 @@ public class CongestionTaxCalculatorService {
         this.vehicleRepository = vehicleRepository;
     }
 
-    public TaxCalculatorResponse getTax(Vehicle vehicle, List<Date> dates, String city)
+    public TaxCalculatorResponse calculateTax(congestion.calculator.model.Vehicle vehicle, List<Date> dates, String city)
     {
-        Map<String, BigDecimal> chargerHistoryPerDay = new HashMap<>();
+        if(dates == null || dates.isEmpty())
+            return TaxCalculatorResponse.builder().totalTax(new BigDecimal(0)).build();
+
         CityEntity cityEntity = cityRepository.findByName(city).get();
 
-        if(dates == null || dates.isEmpty()) return TaxCalculatorResponse.builder().taxAmount(new BigDecimal(0)).build();
-
         // check for tax-free vehicle
-        if(isTollFreeVehicle(cityEntity.getTaxExemptVehicles(), vehicle)) return TaxCalculatorResponse.builder().taxAmount(new BigDecimal(0)).build();
+        if(isTollFreeVehicle(cityEntity.getTaxExemptVehicles(), vehicle))
+            return TaxCalculatorResponse.builder().totalTax(new BigDecimal(0)).build();
+
+        Map<String, BigDecimal> datewiseTaxCharges = new HashMap<>();
 
         DateTimeUtil.sortDateByAsc(dates);
 
         // remove tax free days and holiday month
-        dates.removeIf(date -> IsTollFreeDate(date, cityEntity));
+        dates.removeIf(date -> isTollFreeDate(date, cityEntity));
 
         // apply single charge rule
-        Map<String, List<BigDecimal>> chargesPerDay = getSingleChargeRule(dates, cityEntity);
+        Map<String, List<BigDecimal>> chargesPerDay = applySingleChargeRule(dates, cityEntity);
 
         // calculate total tax
-        BigDecimal totalFee = calculateTotalTaxBySingleChargeRule(chargerHistoryPerDay, cityEntity, chargesPerDay);
+        BigDecimal totalFee = calculateTotalTaxBySingleChargeRule(datewiseTaxCharges, cityEntity, chargesPerDay);
 
-        return TaxCalculatorResponse.builder().taxAmount(totalFee).chargesHistoryByDate(chargerHistoryPerDay).build();
-    }
-
-    private BigDecimal calculateTotalTaxBySingleChargeRule(Map<String, BigDecimal> chargerHistoryPerDay, CityEntity cityEntity, Map<String, List<BigDecimal>> chargesPerDay) {
-        BigDecimal totalFee = new BigDecimal(0);
-        for (Map.Entry<String, List<BigDecimal>> entry : chargesPerDay.entrySet()) {
-            BigDecimal totalChargePerDay = entry.getValue().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-            if(cityEntity.getCityPreferenceEntity() != null &&
-                    cityEntity.getCityPreferenceEntity().getMaxTaxPerDay() != null &&
-                    totalChargePerDay.compareTo(cityEntity.getCityPreferenceEntity().getMaxTaxPerDay()) == 1)
-                totalChargePerDay = cityEntity.getCityPreferenceEntity().getMaxTaxPerDay();
-            chargerHistoryPerDay.put(entry.getKey(), totalChargePerDay);
-            totalFee = totalFee.add(totalChargePerDay);
-        }
-        return totalFee;
+        return TaxCalculatorResponse.builder().totalTax(totalFee).datewiseTaxCharges(datewiseTaxCharges).build();
     }
 
     @SneakyThrows
-    private Map<String, List<BigDecimal>> getSingleChargeRule(List<Date> dates, CityEntity cityEntity) {
+    private Map<String, List<BigDecimal>> applySingleChargeRule(List<Date> dates, CityEntity cityEntity) {
         List<Date> visitedSlots = new ArrayList<>();
         Map<String, List<BigDecimal>> result = new HashMap<>();
         for(int start = 0; start< dates.size(); start++) {
-            //skip duplicate date entries
-            if(visitedSlots.contains(dates.get(start))) continue;
-            // calculate first date entry which has nor previous entry so single charge rule doesn't apply
-            BigDecimal charge = getTollFeeByTariffAndDate(dates.get(start), cityEntity.getTariffEntities());
+            // ignore duplicate date entries
+            if(visitedSlots.contains(dates.get(start)))
+                continue;
+            // calculate tax for first date entry, single charge rule doesn't apply
+            BigDecimal charge = calculateTollFeeByDateAndCharge(dates.get(start), cityEntity.getCityTaxCharges());
             for (int end = start + 1; end < dates.size(); end++) {
                 long duration  = dates.get(end).getTime() - dates.get(start).getTime();
                 long diffInMinutes = TimeUnit.MILLISECONDS.toMinutes(duration);
-                if(diffInMinutes <= cityEntity.getCityPreferenceEntity().getSingleChargeIntervalInMin()) {
+                if(diffInMinutes <= cityEntity.getCityTaxRules().getSingleChargeIntervalInMin()) {
                     visitedSlots.add(dates.get(end));
-                    BigDecimal temp = getTollFeeByTariffAndDate(dates.get(end), cityEntity.getTariffEntities());
+                    BigDecimal temp = calculateTollFeeByDateAndCharge(dates.get(end), cityEntity.getCityTaxCharges());
                     if(temp.compareTo(charge) == 1) charge = temp;
                 } else break;
             }
             calculateChargesByDate(dates, result, start, charge);
         }
         return result;
+    }
+
+    private BigDecimal calculateTotalTaxBySingleChargeRule(Map<String, BigDecimal> chargerHistoryPerDay, CityEntity cityEntity, Map<String, List<BigDecimal>> chargesPerDay) {
+        BigDecimal totalFee = new BigDecimal(0);
+        for (Map.Entry<String, List<BigDecimal>> entry : chargesPerDay.entrySet()) {
+            BigDecimal totalChargePerDay = entry.getValue().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            if(cityEntity.getCityTaxRules() != null &&
+                    cityEntity.getCityTaxRules().getMaxTaxPerDay() != null &&
+                    totalChargePerDay.compareTo(cityEntity.getCityTaxRules().getMaxTaxPerDay()) == 1)
+                totalChargePerDay = cityEntity.getCityTaxRules().getMaxTaxPerDay();
+            chargerHistoryPerDay.put(entry.getKey(), totalChargePerDay);
+            totalFee = totalFee.add(totalChargePerDay);
+        }
+        return totalFee;
     }
 
     private void calculateChargesByDate(List<Date> dates, Map<String, List<BigDecimal>> result, int start, BigDecimal charge) {
@@ -105,50 +108,55 @@ public class CongestionTaxCalculatorService {
         result.put(dateString, chargeLists);
     }
 
-    private BigDecimal getTollFeeByTariffAndDate(Date date, Set<TariffEntity> tariffs) {
+    private BigDecimal calculateTollFeeByDateAndCharge(Date date, Set<CityTaxCharges> taxCharges) {
         BigDecimal totalFee = new BigDecimal(0);
-        if(tariffs == null || tariffs.isEmpty()) return totalFee;
+        if(taxCharges == null || taxCharges.isEmpty()) return totalFee;
 
-        for (TariffEntity tariffEntity : tariffs) {
-            LocalTime fromTime = tariffEntity.getFromTime();
-            LocalTime toTime = tariffEntity.getToTime();
+        for (CityTaxCharges cityTaxCharges : taxCharges) {
+            LocalTime fromTime = cityTaxCharges.getFromTime();
+            LocalTime toTime = cityTaxCharges.getToTime();
             LocalTime source = date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
             if(!source.isBefore(fromTime) && source.isBefore(toTime)) {
-                return totalFee.add(tariffEntity.getCharge());
+                return totalFee.add(cityTaxCharges.getCharge());
             }
         }
 
         return totalFee;
     }
 
-    private boolean isTollFreeVehicle(Set<VehicleEntity> taxExemptVehicles, Vehicle vehicle) {
-        if (taxExemptVehicles == null) return false;
+    private boolean isTollFreeVehicle(Set<Vehicle> taxExemptVehicles, congestion.calculator.model.Vehicle vehicle) {
+        if (taxExemptVehicles == null)
+            return false;
         if(taxExemptVehicles.stream()
-                .filter(taxExemptVehicle -> taxExemptVehicle.getName().equalsIgnoreCase(vehicle.getType())).count() > 0) return true;
+                .filter(taxExemptVehicle -> taxExemptVehicle.getName().equalsIgnoreCase(vehicle.getType())).count() > 0)
+            return true;
         return false;
     }
 
-    private Boolean IsTollFreeDate(Date date, CityEntity cityEntity)
+    private Boolean isTollFreeDate(Date date, CityEntity cityEntity)
     {
         int month = date.getMonth() + 1;
         int day = date.getDay() + 1;
 
-        if (DateTimeUtil.isWeekend(cityEntity.getWorkingCalendarEntity(), day)) return true;
-        if (DateTimeUtil.isHolidayMonth(cityEntity.getHolidayMonthsEntity(), month)) return true;
-        if(DateTimeUtil.isPerOrPostOrInPublicHoliday(date, cityEntity)) return true;
+        if (DateTimeUtil.isWeekend(cityEntity.getCityTaxDays(), day))
+            return true;
+        if (DateTimeUtil.isTaxFreeDay(date, cityEntity))
+            return true;
+        if (DateTimeUtil.isHolidayMonth(cityEntity.getCityHolidayMonths(), month))
+            return true;
 
         return false;
     }
 
-    public void isValidCity(String city) throws CustomException {
+    public void validateCity(String city) throws CustomException {
         if(cityRepository.findByName(city).isEmpty()) {
-            throw new CustomException("City not found in our records. Please enter a valid City!", HttpStatus.NOT_FOUND);
+            throw new CustomException("City not found. Please enter a valid city", HttpStatus.NOT_FOUND);
         }
     }
 
-    public void isValidVehicle(Vehicle vehicle) throws CustomException {
+    public void validateVehicle(congestion.calculator.model.Vehicle vehicle) throws CustomException {
         if(vehicleRepository.findByName(vehicle.getType()).isEmpty()) {
-            throw new CustomException("Vehicle type not found in our records. Please enter a valid Vehicle!", HttpStatus.NOT_FOUND);
+            throw new CustomException("Vehicle type not found. Please enter a valid vehicle", HttpStatus.NOT_FOUND);
         }
     }
 }

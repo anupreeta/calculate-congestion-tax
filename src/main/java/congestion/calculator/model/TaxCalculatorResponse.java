@@ -12,6 +12,6 @@ import java.util.Map;
 @Builder
 public class TaxCalculatorResponse {
 
-    private BigDecimal taxAmount;
-    private Map<String, BigDecimal> chargesHistoryByDate;
+    private BigDecimal totalTax;
+    private Map<String, BigDecimal> datewiseTaxCharges;
 }

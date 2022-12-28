@@ -13,7 +13,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "city_tax_charges")
-public class TariffEntity {
+public class CityTaxCharges {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

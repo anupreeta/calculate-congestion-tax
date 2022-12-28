@@ -1,4 +1,4 @@
-package congestion.calculator.repo;
+package congestion.calculator.repository;
 
 import congestion.calculator.entity.CityEntity;
 import org.springframework.data.jpa.repository.JpaRepository;

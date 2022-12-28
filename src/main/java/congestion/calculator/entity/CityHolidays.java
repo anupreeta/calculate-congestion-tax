@@ -12,7 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "city_holidays")
-public class HolidayCalendarEntity {
+public class CityHolidays {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

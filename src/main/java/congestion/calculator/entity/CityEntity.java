@@ -22,26 +22,26 @@ public class CityEntity {
     private String name;
 
     @OneToMany(mappedBy="cityEntity")
-    private Set<HolidayCalendarEntity> holidayCalendarEntities;
+    private Set<CityHolidays> cityHolidays;
 
     @OneToOne(mappedBy = "cityEntity", cascade = CascadeType.MERGE)
     @PrimaryKeyJoinColumn
-    private WorkingCalendarEntity workingCalendarEntity;
+    private CityTaxDays cityTaxDays;
 
     @OneToOne(mappedBy = "cityEntity", cascade = CascadeType.MERGE)
     @PrimaryKeyJoinColumn
-    private HolidayMonthsEntity holidayMonthsEntity;
+    private CityHolidayMonths cityHolidayMonths;
 
     @OneToMany(mappedBy="cityEntity")
-    private Set<TariffEntity> tariffEntities;
+    private Set<CityTaxCharges> cityTaxCharges;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "city_vehicle",
             joinColumns = @JoinColumn(name = "city_id"),
             inverseJoinColumns = @JoinColumn(name = "vehicle_id"))
-    private Set<VehicleEntity> taxExemptVehicles;
+    private Set<Vehicle> taxExemptVehicles;
 
     @OneToOne(mappedBy = "cityEntity", cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @PrimaryKeyJoinColumn
-    private CityPreferenceEntity cityPreferenceEntity;
+    private CityTaxRules cityTaxRules;
 }
